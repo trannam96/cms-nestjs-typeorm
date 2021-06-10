@@ -10,6 +10,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { TagsModule } from './tags/tags.module';
 import { PostsModule } from './posts/posts.module';
 import { UploadModule } from './upload/upload.module';
+import { MailModule } from './microservices/mailer/mail.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { MicroserviceModule } from './microservices/microservice.module';
 
 @Module({
   imports: [
@@ -21,6 +24,7 @@ import { UploadModule } from './upload/upload.module';
     TagsModule,
     PostsModule,
     UploadModule,
+    MicroserviceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

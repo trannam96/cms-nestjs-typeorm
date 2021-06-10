@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from '../repositories/user.repository';
 import { User } from '../entities/user';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
@@ -6,10 +6,17 @@ import { LoginDto } from './dto/login.dto';
 import { FindConditions } from 'typeorm';
 import { UserResDto } from './dto/user-res.dto';
 import { plainToClass } from 'class-transformer';
+import { renderFile } from 'ejs';
+import { IMailOptions } from '../common/interfaces/mail.interfaces';
+import { ClientProxy } from '@nestjs/microservices';
+import { MAIL_SERVICE } from '../common/constants';
 
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    @Inject('MAIL_SERVICE') private readonly mailClient: ClientProxy,
+  ) {}
 
   async findOne(options?: FindConditions<User>) {
     return await this.userRepository.findOne(options);
@@ -21,7 +28,9 @@ export class UserService {
       throw new HttpException('Email already exists', HttpStatus.CONFLICT);
     }
     const newUser = new User(user);
-    return await this.userRepository.save(newUser);
+    await this.userRepository.save(newUser);
+    this.sendMailRegister(newUser);
+    return newUser;
   }
 
   async login(login: LoginDto): Promise<User> {
@@ -46,5 +55,24 @@ export class UserService {
     const updateUser = await this.userRepository.save({ ...user, ...userDto });
 
     return plainToClass(UserResDto, updateUser, { excludeExtraneousValues: true });
+  }
+
+  private async sendMailRegister(user: User): Promise<void> {
+    const body = await renderFile(
+      './email_templates/mail_register_template.ejs',
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      { rmWhitespace: true },
+    );
+
+    const mailOptions: IMailOptions = {
+      to: user.email,
+      subject: 'Welcome to CMS',
+      html: body,
+    };
+
+    this.mailClient.send(MAIL_SERVICE.CMD.SEND_MAIL, mailOptions).toPromise();
   }
 }
