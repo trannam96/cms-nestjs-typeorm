@@ -7,6 +7,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import { CaslAbilityFactory } from './casl-ability.factory';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { MicroserviceModule } from '../microservices/microservice.module';
 
 @Global()
 @Module({
