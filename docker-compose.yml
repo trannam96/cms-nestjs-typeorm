@@ -1,0 +1,19 @@
+services:
+  db:
+    image: mysql
+    container_name: cms_db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: cms-project
+  app:
+    image: cms-dockder/node
+    container_name: cms_api
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
